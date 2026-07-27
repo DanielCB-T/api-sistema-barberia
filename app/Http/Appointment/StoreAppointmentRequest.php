@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Appointment;
 
+use App\Models\Branch;
 use App\Models\Service;
 use App\Services\AppointmentAvailability;
 use Illuminate\Foundation\Http\FormRequest;
@@ -32,20 +33,34 @@ class StoreAppointmentRequest extends FormRequest
             'barber_id.exists' => 'El barbero seleccionado no existe.',
         ];
     }
-
-    /**
-     * Tras pasar las reglas básicas, valida que el barbero elegido esté
-     * libre en ese horario (considerando la duración del servicio).
-     */
+    
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            if ($validator->errors()->hasAny(['service_id', 'barber_id', 'date_time'])) {
+            if ($validator->errors()->hasAny(['service_id', 'branch_id', 'barber_id', 'date_time'])) {
                 return;
             }
 
             $service = Service::find($this->input('service_id'));
-            if (! $service) {
+            $branch = Branch::find($this->input('branch_id'));
+            if (! $service || ! $branch) {
+                return;
+            }
+
+            if (! AppointmentAvailability::isWithinBusinessHours(
+                branch: $branch,
+                start: $this->input('date_time'),
+                durationMinutes: $service->duration,
+            )) {
+                $validator->errors()->add(
+                    'date_time',
+                    sprintf(
+                        'Esta sucursal atiende de %s a %s. Elige un horario dentro de ese rango.',
+                        $branch->opening_time->format('H:i'),
+                        $branch->closing_time->format('H:i'),
+                    )
+                );
+
                 return;
             }
 
