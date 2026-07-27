@@ -27,6 +27,11 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            'phone' => fake()->numerify('+52 951 ### ####'),
+            'birthdate' => fake()->dateTimeBetween('-55 years', '-18 years')->format('Y-m-d'),
+            'role' => 'client',
+            'branch_id' => null,
+            'avatar' => 'https://i.pravatar.cc/150?u='.fake()->uuid(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
@@ -39,6 +44,22 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+            'branch_id' => null,
+        ]);
+    }
+
+    public function barber(?int $branchId = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'barber',
+            'branch_id' => $branchId,
         ]);
     }
 }
