@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BarberController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,10 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 // Catálogo de servicios: lectura pública (así lo consume el sitio público).
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{service}', [ServiceController::class, 'show']);
+
+// Barberos: lectura pública, se usa en el selector del formulario de cita
+// (?branch_id=1 para filtrar por sucursal).
+Route::get('/barbers', [BarberController::class, 'index']);
 
 // ============================================================
 // Rutas protegidas: requieren token válido (Authorization: Bearer <token>)
