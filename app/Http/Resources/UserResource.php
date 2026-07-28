@@ -24,6 +24,7 @@ class UserResource extends JsonResource
             'branch_id' => $this->branch_id,
             'branch' => new BranchResource($this->whenLoaded('branch')),
             'avatar' => $this->avatar,
+            'notify_whatsapp' => (bool) $this->notify_whatsapp,
             'created_at' => $this->created_at,
         ];
     }

@@ -29,6 +29,7 @@ class User extends Authenticatable
         'role',
         'branch_id',
         'avatar',
+        'notify_whatsapp',
     ];
 
     /**
@@ -52,6 +53,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'birthdate' => 'date',
             'password' => 'hashed',
+            'notify_whatsapp' => 'boolean',
         ];
     }
 

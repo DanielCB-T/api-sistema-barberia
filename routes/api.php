@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\NewsController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductController;
@@ -66,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/payments/create', [PaymentController::class, 'create']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
 
     // --- Citas: cliente, barbero y admin comparten los mismos endpoints;
     // el propio controlador filtra qué puede ver/hacer cada rol. ---
