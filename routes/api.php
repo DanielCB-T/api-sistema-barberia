@@ -8,7 +8,9 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -52,12 +54,18 @@ Route::get('/branches/{branch}', [BranchController::class, 'show']);
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/{news}', [NewsController::class, 'show']);
 
+// Webhook de Stripe: público, sin auth (Stripe no manda un token nuestro,
+// la seguridad la da la verificación de firma dentro del controlador).
+Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
+
 // ============================================================
 // Rutas protegidas: requieren token válido (Authorization: Bearer <token>)
 // ============================================================
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/payments/create', [PaymentController::class, 'create']);
 
     // --- Citas: cliente, barbero y admin comparten los mismos endpoints;
     // el propio controlador filtra qué puede ver/hacer cada rol. ---
