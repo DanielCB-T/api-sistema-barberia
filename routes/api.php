@@ -3,7 +3,10 @@
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BarberController;
+use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ServiceController;
@@ -39,6 +42,15 @@ Route::get('/barbers', [BarberController::class, 'index']);
 // Catálogo de productos: lectura pública (igual que servicios).
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
+
+// Sucursales: lectura pública, incluye opening_time/closing_time (se usan
+// para validar el horario comercial al agendar, ver tarea 13).
+Route::get('/branches', [BranchController::class, 'index']);
+Route::get('/branches/{branch}', [BranchController::class, 'show']);
+
+// Noticias: lectura pública, más recientes primero.
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/{news}', [NewsController::class, 'show']);
 
 // ============================================================
 // Rutas protegidas: requieren token válido (Authorization: Bearer <token>)
@@ -76,6 +88,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+        Route::get('/clients/{client}', [ClientController::class, 'show']);
     });
 
     // --- Admin o el propio usuario (la lógica exacta vive en el controlador) ---
