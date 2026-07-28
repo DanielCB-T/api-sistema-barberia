@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        // Números de prueba de Twilio Sandbox for WhatsApp / un número de Twilio con SMS habilitado.
+        'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'), // ej. +14155238886
+        'sms_from' => env('TWILIO_SMS_FROM'),
+    ],
+
 ];
