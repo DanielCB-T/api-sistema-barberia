@@ -9,18 +9,26 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     /**
      * POST /api/register
-     * Crea un cliente nuevo y regresa un token de acceso real.
+     * Crea un cliente nuevo, envía el correo de verificación y avisa a los
+     * administradores. NO devuelve token: el usuario debe verificar su correo
+     * antes de poder iniciar sesión.
      */
     public function register(RegisterRequest $request)
     {
@@ -39,19 +47,23 @@ class AuthController extends Controller
 
         $user = User::create($data);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Sistema nativo de Laravel: envía la notificación de verificación
+        // (enlace firmado con expiración) al correo recién registrado.
+        $user->sendEmailVerificationNotification();
+
+        // Notificación interna para administradores (campanita del Navbar).
+        $this->notifications->userRegistered($user);
 
         return response()->json([
-            'message' => 'Cuenta creada correctamente.',
+            'message' => 'Cuenta creada. Te enviamos un correo para verificar tu cuenta antes de iniciar sesión.',
             'user' => new UserResource($user),
-            'token' => $token,
-            'token_type' => 'Bearer',
+            'verification_required' => true,
         ], 201);
     }
 
     /**
      * POST /api/login
-     * Valida credenciales y regresa un token de acceso real.
+     * Valida credenciales, exige correo verificado y regresa un token real.
      */
     public function login(LoginRequest $request)
     {
@@ -66,11 +78,21 @@ class AuthController extends Controller
             ]);
         }
 
+        // Impide iniciar sesión mientras el correo no haya sido verificado.
+        // Se usa una excepción 403 (no 422) para que el frontend distinga el
+        // caso "correo sin verificar" del de "credenciales incorrectas" y
+        // ofrezca reenviar el correo de verificación.
+        if (! $user->hasVerifiedEmail()) {
+            throw new AccessDeniedHttpException(
+                'Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.'
+            );
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Sesión iniciada correctamente.',
-            'user' => new \App\Http\Resources\UserResource($user),
+            'user' => new UserResource($user),
             'token' => $token,
             'token_type' => 'Bearer',
         ]);
@@ -82,7 +104,7 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        return new \App\Http\Resources\UserResource($request->user()->load('branch'));
+        return new UserResource($request->user()->load('branch'));
     }
 
     /**
@@ -171,7 +193,7 @@ class AuthController extends Controller
         $user = $request->user();
 
         if (! Hash::check($request->input('current_password'), $user->password)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'current_password' => ['La contraseña actual no es correcta.'],
             ]);
         }

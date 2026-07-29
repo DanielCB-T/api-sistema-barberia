@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\CheckoutRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,6 +15,10 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 class OrderController extends Controller
 {
     private const RELATIONS = ['items.product', 'client'];
+
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
 
     /**
      * GET /api/orders
@@ -93,7 +98,13 @@ class OrderController extends Controller
             ]);
         });
 
-        return (new OrderResource($cart->load(self::RELATIONS)))
+        // Eventos: pedido realizado y pago aprobado (el checkout deja la
+        // orden en estado "pagado"). Ambos generan notificaciones internas.
+        $fresh = $cart->load(self::RELATIONS);
+        $this->notifications->orderPlaced($fresh);
+        $this->notifications->paymentApproved($fresh);
+
+        return (new OrderResource($fresh))
             ->additional(['message' => 'Orden generada correctamente.'])
             ->response()
             ->setStatusCode(201);

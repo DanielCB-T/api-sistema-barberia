@@ -35,4 +35,24 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp (Meta WhatsApp Cloud API)
+    |--------------------------------------------------------------------------
+    |
+    | Usado por App\Services\WhatsAppService para enviar la confirmación de
+    | citas. Si WHATSAPP_ENABLED=false o faltan credenciales, el servicio
+    | degrada con elegancia (registra el mensaje en el log y marca la
+    | notificación como "fallido") sin romper la petición del usuario.
+    |
+    */
+
+    'whatsapp' => [
+        'enabled' => env('WHATSAPP_ENABLED', false),
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
+        'default_country_code' => env('WHATSAPP_DEFAULT_COUNTRY_CODE', '52'),
+    ],
+
 ];

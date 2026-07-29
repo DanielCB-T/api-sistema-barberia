@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentStatusHistory;
 use App\Models\Service;
 use App\Services\AppointmentStatusMachine;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -18,6 +19,10 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 class AppointmentController extends Controller
 {
     private const RELATIONS = ['client', 'barber', 'service', 'branch', 'statusHistory'];
+
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
 
     /**
      * GET /api/appointments
@@ -88,6 +93,10 @@ class AppointmentController extends Controller
                 : 'Cita creada por el cliente.',
         ]);
 
+        // Notificaciones internas (cliente, barbero, admins) + confirmación
+        // por WhatsApp al cliente si la cita se marcó con notify_whatsapp.
+        $this->notifications->appointmentCreated($appointment->load(self::RELATIONS));
+
         return (new AppointmentResource($appointment->load(self::RELATIONS)))
             ->additional(['message' => 'Cita agendada correctamente.'])
             ->response()
@@ -134,6 +143,12 @@ class AppointmentController extends Controller
             'note' => 'Se solicitó reagendación (cambio de fecha/servicio/barbero).',
         ]);
 
+        // Solo notificamos como "reagendada" cuando realmente cambió algún
+        // dato relevante (fecha, servicio o barbero).
+        if (! empty($data)) {
+            $this->notifications->appointmentRescheduled($appointment->load(self::RELATIONS));
+        }
+
         return (new AppointmentResource($appointment->load(self::RELATIONS)))
             ->additional(['message' => 'Cita reprogramada correctamente.']);
     }
@@ -175,8 +190,32 @@ class AppointmentController extends Controller
             'note' => $request->input('note'),
         ]);
 
-        return (new AppointmentResource($appointment->load(self::RELATIONS)))
+        // Notificaciones según el nuevo estado.
+        $fresh = $appointment->load(self::RELATIONS);
+        if ($newStatus === 'cancelada') {
+            $this->notifications->appointmentCancelled($fresh);
+        } elseif ($newStatus === 'pospuesta') {
+            $this->notifications->appointmentRescheduled($fresh);
+        }
+
+        return (new AppointmentResource($fresh))
             ->additional(['message' => "Cita actualizada a estado \"{$newStatus}\"."]);
+    }
+
+    /**
+     * POST /api/appointments/{appointment}/confirm-whatsapp  (solo admin)
+     * Reenvía manualmente la confirmación por WhatsApp al cliente.
+     */
+    public function confirmWhatsapp(Request $request, Appointment $appointment)
+    {
+        $sent = $this->notifications->sendAppointmentWhatsapp($appointment->load(self::RELATIONS));
+
+        return response()->json([
+            'message' => $sent
+                ? 'Confirmación por WhatsApp reenviada correctamente.'
+                : 'No se pudo enviar el WhatsApp (revisa la configuración o el teléfono del cliente).',
+            'sent' => $sent,
+        ], $sent ? 200 : 422);
     }
 
     /**

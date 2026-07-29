@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BarberController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
@@ -31,6 +32,16 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
+// --- Verificación de correo (sistema nativo de Laravel) ---
+// El enlace del correo apunta a esta ruta firmada; tras verificar redirige
+// al frontend. El reenvío es público por correo (respuesta genérica).
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
+Route::post('/email/verify/resend', [EmailVerificationController::class, 'resend'])
+    ->middleware('throttle:6,1');
+
 // Catálogo: lectura pública (así lo consume el sitio público).
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{service}', [ServiceController::class, 'show']);
@@ -54,7 +65,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
 
+    // --- Notificaciones (campanita del Navbar) ---
     Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
 
     // --- Citas: cliente, barbero y admin comparten los mismos endpoints;
     // el propio controlador filtra qué puede ver/hacer cada rol. ---
@@ -101,6 +116,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/barbers/{barber}', [BarberController::class, 'destroy']);
 
         Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
+
+        // Reenvío manual de la confirmación por WhatsApp al cliente.
+        Route::post('/appointments/{appointment}/confirm-whatsapp', [AppointmentController::class, 'confirmWhatsapp']);
     });
 
     // --- Admin o el propio usuario (la lógica exacta vive en el controlador) ---

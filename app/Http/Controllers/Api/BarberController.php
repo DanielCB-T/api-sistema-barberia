@@ -7,6 +7,7 @@ use App\Http\Requests\Barber\StoreBarberRequest;
 use App\Http\Requests\Barber\UpdateBarberRequest;
 use App\Http\Resources\BarberResource;
 use App\Models\User;
+use App\Services\NotificationService;
 use App\Support\ImageStorage;
 use Illuminate\Http\Request;
 
@@ -18,6 +19,10 @@ use Illuminate\Http\Request;
  */
 class BarberController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     /**
      * GET /api/barbers (público)
      */
@@ -46,6 +51,15 @@ class BarberController extends Controller
         }
 
         $barber = User::create($data);
+
+        // El barbero es un usuario del sistema; damos por verificado su correo
+        // ya que lo da de alta un administrador (no pasa por el flujo público).
+        if (! $barber->hasVerifiedEmail()) {
+            $barber->forceFill(['email_verified_at' => now()])->save();
+        }
+
+        // Notificación interna para administradores.
+        $this->notifications->barberRegistered($barber);
 
         return (new BarberResource($barber->load('branch')))
             ->additional(['message' => 'Barbero creado correctamente.'])
