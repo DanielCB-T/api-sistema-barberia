@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Orquesta la creación de notificaciones internas (la campanita del Navbar)
@@ -230,15 +231,30 @@ class NotificationService
         ?Appointment $appointment = null,
         string $channel = 'app',
         string $status = 'enviado'
-    ): Notification {
-        return Notification::create([
-            'user_id' => $userId,
-            'appointment_id' => $appointment?->id,
-            'channel' => $channel,
-            'type' => $type,
-            'message' => $message,
-            'status' => $status,
-        ]);
+    ): ?Notification {
+        // Blindaje: la creación de la notificación NUNCA debe romper la
+        // operación principal (crear cita, barbero, pedido, etc.). Si algo
+        // falla —por ejemplo, la migración de notificaciones aún no se ha
+        // ejecutado y faltan las columnas `type`/`read_at`— se registra en el
+        // log y se continúa con normalidad.
+        try {
+            return Notification::create([
+                'user_id' => $userId,
+                'appointment_id' => $appointment?->id,
+                'channel' => $channel,
+                'type' => $type,
+                'message' => $message,
+                'status' => $status,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo guardar la notificación (se ignora para no romper la operación).', [
+                'type' => $type,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

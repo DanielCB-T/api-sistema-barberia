@@ -85,7 +85,8 @@ class WhatsAppService
         try {
             $response = Http::withToken($this->token)
                 ->acceptJson()
-                ->timeout(15)
+                ->connectTimeout(5)
+                ->timeout(8)
                 ->post(
                     "https://graph.facebook.com/{$this->apiVersion}/{$this->phoneNumberId}/messages",
                     [

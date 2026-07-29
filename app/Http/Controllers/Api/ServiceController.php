@@ -7,6 +7,7 @@ use App\Http\Requests\Service\StoreServiceRequest;
 use App\Http\Requests\Service\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
+use App\Support\ImageStorage;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -40,7 +41,7 @@ class ServiceController extends Controller
      */
     public function store(StoreServiceRequest $request)
     {
-        $service = Service::create($request->validated());
+        $service = Service::create($this->dataWithImage($request));
 
         return (new ServiceResource($service))
             ->additional(['message' => 'Servicio creado correctamente.'])
@@ -53,7 +54,7 @@ class ServiceController extends Controller
      */
     public function update(UpdateServiceRequest $request, Service $service)
     {
-        $service->update($request->validated());
+        $service->update($this->dataWithImage($request, $service->image));
 
         return (new ServiceResource($service))
             ->additional(['message' => 'Servicio actualizado correctamente.']);
@@ -64,10 +65,28 @@ class ServiceController extends Controller
      */
     public function destroy(Service $service)
     {
+        ImageStorage::delete($service->image);
         $service->delete();
 
         return response()->json([
             'message' => 'Servicio eliminado correctamente.',
         ]);
+    }
+
+    /**
+     * Guarda el archivo de imagen (si viene) y deja solo la ruta relativa;
+     * borra la imagen anterior al reemplazarla.
+     */
+    private function dataWithImage(Request $request, ?string $oldImage = null): array
+    {
+        $data = $request->validated();
+        unset($data['image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = ImageStorage::store($request->file('image'), 'services');
+            ImageStorage::delete($oldImage);
+        }
+
+        return $data;
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Requests\News\StoreNewsRequest;
 use App\Http\Requests\News\UpdateNewsRequest;
 use App\Http\Resources\NewsResource;
 use App\Models\News;
+use App\Support\ImageStorage;
 use Illuminate\Http\Request;
 
 class NewsController extends Controller
@@ -36,7 +37,7 @@ class NewsController extends Controller
      */
     public function store(StoreNewsRequest $request)
     {
-        $news = News::create($request->validated());
+        $news = News::create($this->dataWithImage($request));
 
         return (new NewsResource($news))
             ->additional(['message' => 'Noticia creada correctamente.'])
@@ -49,7 +50,7 @@ class NewsController extends Controller
      */
     public function update(UpdateNewsRequest $request, News $news)
     {
-        $news->update($request->validated());
+        $news->update($this->dataWithImage($request, $news->image));
 
         return (new NewsResource($news))
             ->additional(['message' => 'Noticia actualizada correctamente.']);
@@ -60,10 +61,24 @@ class NewsController extends Controller
      */
     public function destroy(News $news)
     {
+        ImageStorage::delete($news->image);
         $news->delete();
 
         return response()->json([
             'message' => 'Noticia eliminada correctamente.',
         ]);
+    }
+
+    private function dataWithImage(Request $request, ?string $oldImage = null): array
+    {
+        $data = $request->validated();
+        unset($data['image']);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = ImageStorage::store($request->file('image'), 'news');
+            ImageStorage::delete($oldImage);
+        }
+
+        return $data;
     }
 }

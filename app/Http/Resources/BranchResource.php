@@ -16,7 +16,7 @@ class BranchResource extends JsonResource
             'phone' => $this->phone,
             'opening_time' => $this->opening_time,
             'closing_time' => $this->closing_time,
-            'image' => $this->image,
+            'image' => \App\Support\ImageStorage::url($this->image),
         ];
     }
 }

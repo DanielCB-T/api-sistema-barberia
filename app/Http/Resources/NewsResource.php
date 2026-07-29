@@ -14,7 +14,7 @@ class NewsResource extends JsonResource
             'title' => $this->title,
             'summary' => $this->summary,
             'date' => $this->date?->format('Y-m-d'),
-            'image' => $this->image,
+            'image' => \App\Support\ImageStorage::url($this->image),
         ];
     }
 }

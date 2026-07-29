@@ -16,7 +16,7 @@ class ServiceResource extends JsonResource
             'price' => (float) $this->price,
             'duration' => $this->duration,
             'description' => $this->description,
-            'image' => $this->image,
+            'image' => \App\Support\ImageStorage::url($this->image),
         ];
     }
 }

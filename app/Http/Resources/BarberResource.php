@@ -11,7 +11,7 @@ class BarberResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'avatar' => $this->avatar,
+            'avatar' => \App\Support\ImageStorage::url($this->avatar),
             'branch_id' => $this->branch_id,
             'branch' => new BranchResource($this->whenLoaded('branch')),
         ];

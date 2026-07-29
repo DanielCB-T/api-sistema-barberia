@@ -19,7 +19,7 @@ class StoreBranchRequest extends FormRequest
             'phone' => ['required', 'string', 'max:30'],
             'opening_time' => ['required', 'date_format:H:i'],
             'closing_time' => ['required', 'date_format:H:i', 'after:opening_time'],
-            'image' => ['nullable', 'url'],
+            'image' => ['nullable', 'image', 'max:4096'],
         ];
     }
 }

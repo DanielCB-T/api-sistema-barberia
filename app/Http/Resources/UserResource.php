@@ -23,7 +23,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'branch_id' => $this->branch_id,
             'branch' => new BranchResource($this->whenLoaded('branch')),
-            'avatar' => $this->avatar,
+            'avatar' => \App\Support\ImageStorage::url($this->avatar),
             'created_at' => $this->created_at,
         ];
     }

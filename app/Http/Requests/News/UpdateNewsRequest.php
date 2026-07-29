@@ -17,7 +17,7 @@ class UpdateNewsRequest extends FormRequest
             'title' => ['sometimes', 'required', 'string', 'max:180'],
             'summary' => ['sometimes', 'required', 'string'],
             'date' => ['sometimes', 'required', 'date'],
-            'image' => ['nullable', 'url'],
+            'image' => ['nullable', 'image', 'max:4096'],
         ];
     }
 }

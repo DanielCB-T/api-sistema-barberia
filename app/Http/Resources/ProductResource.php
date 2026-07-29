@@ -15,7 +15,7 @@ class ProductResource extends JsonResource
             'price' => (float) $this->price,
             'stock' => $this->stock,
             'description' => $this->description,
-            'image' => $this->image,
+            'image' => \App\Support\ImageStorage::url($this->image),
         ];
     }
 }
