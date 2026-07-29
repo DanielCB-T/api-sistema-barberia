@@ -7,7 +7,6 @@ use App\Http\Requests\Branch\StoreBranchRequest;
 use App\Http\Requests\Branch\UpdateBranchRequest;
 use App\Http\Resources\BranchResource;
 use App\Models\Branch;
-use App\Support\ImageStorage;
 use Illuminate\Http\Request;
 
 class BranchController extends Controller
@@ -35,13 +34,7 @@ class BranchController extends Controller
      */
     public function store(StoreBranchRequest $request)
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            $data['image'] = ImageStorage::store($request->file('image'), 'branches');
-        }
-
-        $branch = Branch::create($data);
+        $branch = Branch::create($request->validated());
 
         return (new BranchResource($branch))
             ->additional(['message' => 'Sucursal creada correctamente.'])
@@ -54,15 +47,7 @@ class BranchController extends Controller
      */
     public function update(UpdateBranchRequest $request, Branch $branch)
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            $oldImage = $branch->image;
-            $data['image'] = ImageStorage::store($request->file('image'), 'branches');
-            ImageStorage::delete($oldImage);
-        }
-
-        $branch->update($data);
+        $branch->update($request->validated());
 
         return (new BranchResource($branch))
             ->additional(['message' => 'Sucursal actualizada correctamente.']);
@@ -73,7 +58,6 @@ class BranchController extends Controller
      */
     public function destroy(Branch $branch)
     {
-        ImageStorage::delete($branch->image);
         $branch->delete();
 
         return response()->json([

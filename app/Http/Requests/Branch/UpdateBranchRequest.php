@@ -19,7 +19,7 @@ class UpdateBranchRequest extends FormRequest
             'phone' => ['sometimes', 'required', 'string', 'max:30'],
             'opening_time' => ['sometimes', 'required', 'date_format:H:i'],
             'closing_time' => ['sometimes', 'required', 'date_format:H:i', 'after:opening_time'],
-            'image' => ['nullable', 'image', 'max:4096'],
+            'image' => ['nullable', 'url'],
         ];
     }
 }

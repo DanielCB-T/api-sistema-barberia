@@ -7,7 +7,6 @@ use App\Http\Requests\Service\StoreServiceRequest;
 use App\Http\Requests\Service\UpdateServiceRequest;
 use App\Http\Resources\ServiceResource;
 use App\Models\Service;
-use App\Support\ImageStorage;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -41,13 +40,7 @@ class ServiceController extends Controller
      */
     public function store(StoreServiceRequest $request)
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            $data['image'] = ImageStorage::store($request->file('image'), 'services');
-        }
-
-        $service = Service::create($data);
+        $service = Service::create($request->validated());
 
         return (new ServiceResource($service))
             ->additional(['message' => 'Servicio creado correctamente.'])
@@ -60,15 +53,7 @@ class ServiceController extends Controller
      */
     public function update(UpdateServiceRequest $request, Service $service)
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            $oldImage = $service->image;
-            $data['image'] = ImageStorage::store($request->file('image'), 'services');
-            ImageStorage::delete($oldImage);
-        }
-
-        $service->update($data);
+        $service->update($request->validated());
 
         return (new ServiceResource($service))
             ->additional(['message' => 'Servicio actualizado correctamente.']);
@@ -79,7 +64,6 @@ class ServiceController extends Controller
      */
     public function destroy(Service $service)
     {
-        ImageStorage::delete($service->image);
         $service->delete();
 
         return response()->json([

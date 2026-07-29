@@ -7,7 +7,6 @@ use App\Http\Requests\Product\StoreProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
-use App\Support\ImageStorage;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -41,13 +40,7 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            $data['image'] = ImageStorage::store($request->file('image'), 'products');
-        }
-
-        $product = Product::create($data);
+        $product = Product::create($request->validated());
 
         return (new ProductResource($product))
             ->additional(['message' => 'Producto creado correctamente.'])
@@ -60,15 +53,7 @@ class ProductController extends Controller
      */
     public function update(UpdateProductRequest $request, Product $product)
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            $oldImage = $product->image;
-            $data['image'] = ImageStorage::store($request->file('image'), 'products');
-            ImageStorage::delete($oldImage);
-        }
-
-        $product->update($data);
+        $product->update($request->validated());
 
         return (new ProductResource($product))
             ->additional(['message' => 'Producto actualizado correctamente.']);
@@ -79,7 +64,6 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        ImageStorage::delete($product->image);
         $product->delete();
 
         return response()->json([

@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Support\ImageStorage;
 
 /**
  * Nunca expone password ni remember_token: solo se listan los campos
@@ -24,7 +23,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'branch_id' => $this->branch_id,
             'branch' => new BranchResource($this->whenLoaded('branch')),
-            'avatar' => ImageStorage::url($this->avatar),
+            'avatar' => $this->avatar,
             'created_at' => $this->created_at,
         ];
     }
