@@ -25,10 +25,9 @@ class AuthController extends Controller
 
     /**
      * POST /api/register
-     * Crea un cliente nuevo, le envía el correo de verificación (sistema
-     * nativo de Laravel) y avisa a los administradores. La verificación NO
-     * bloquea el acceso: se devuelve el token para iniciar sesión de una vez;
-     * el correo de verificación queda como paso opcional/informativo.
+     * Crea un cliente nuevo, envía el correo de verificación y avisa a los
+     * administradores. NO devuelve token: el usuario debe verificar su correo
+     * antes de poder iniciar sesión.
      */
     public function register(RegisterRequest $request)
     {
@@ -48,38 +47,22 @@ class AuthController extends Controller
         $user = User::create($data);
 
         // Sistema nativo de Laravel: envía la notificación de verificación
-        // (enlace firmado con expiración) al correo recién registrado. Se
-        // envuelve en try/catch para que un fallo de correo NO impida crear
-        // la cuenta; el error queda en el log.
-        try {
-            $user->sendEmailVerificationNotification();
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('No se pudo enviar el correo de verificación.', [
-                'email' => $user->email,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        // (enlace firmado con expiración) al correo recién registrado.
+        $user->sendEmailVerificationNotification();
 
         // Notificación interna para administradores (campanita del Navbar).
         $this->notifications->userRegistered($user);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
         return response()->json([
-            'message' => 'Cuenta creada correctamente. Te enviamos un correo para verificar tu cuenta.',
+            'message' => 'Cuenta creada. Te enviamos un correo para verificar tu cuenta antes de iniciar sesión.',
             'user' => new UserResource($user),
-            'token' => $token,
-            'token_type' => 'Bearer',
+            'verification_required' => true,
         ], 201);
     }
 
     /**
      * POST /api/login
-     * Valida credenciales y regresa un token real.
-     *
-     * NOTA: la verificación de correo ya NO bloquea el inicio de sesión. El
-     * correo de verificación se sigue enviando al registrarse, pero es un
-     * paso opcional; se puede acceder con la cuenta aunque no esté verificada.
+     * Valida credenciales, exige correo verificado y regresa un token real.
      */
     public function login(LoginRequest $request)
     {
@@ -93,6 +76,10 @@ class AuthController extends Controller
                 'email' => ['Las credenciales proporcionadas son incorrectas.'],
             ]);
         }
+
+        // NOTA: la verificación de correo ya NO bloquea el inicio de sesión.
+        // El correo de verificación se sigue enviando al registrarse (paso
+        // opcional), pero se puede acceder aunque la cuenta no esté verificada.
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
