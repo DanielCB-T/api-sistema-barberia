@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Support\ImageStorage;
 
 class ServiceResource extends JsonResource
 {
@@ -16,7 +17,7 @@ class ServiceResource extends JsonResource
             'price' => (float) $this->price,
             'duration' => $this->duration,
             'description' => $this->description,
-            'image' => $this->image,
+            'image' => ImageStorage::url($this->image),
         ];
     }
 }

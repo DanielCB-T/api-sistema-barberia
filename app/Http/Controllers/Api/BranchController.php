@@ -3,26 +3,81 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Branch\StoreBranchRequest;
+use App\Http\Requests\Branch\UpdateBranchRequest;
 use App\Http\Resources\BranchResource;
 use App\Models\Branch;
+use App\Support\ImageStorage;
+use Illuminate\Http\Request;
 
 class BranchController extends Controller
 {
     /**
-     * GET /api/branches  (público, sin paginar: son pocas sucursales)
-     * Incluye opening_time/closing_time, que usa el frontend para validar
-     * el horario comercial antes de agendar una cita (ver tarea 13).
+     * GET /api/branches (público)
      */
-    public function index()
+    public function index(Request $request)
     {
-        return BranchResource::collection(Branch::query()->orderBy('name')->get());
+        $branches = Branch::query()->orderBy('name')->get();
+
+        return BranchResource::collection($branches);
     }
 
     /**
-     * GET /api/branches/{branch}  (público)
+     * GET /api/branches/{branch} (público)
      */
     public function show(Branch $branch)
     {
         return new BranchResource($branch);
+    }
+
+    /**
+     * POST /api/branches (solo admin)
+     */
+    public function store(StoreBranchRequest $request)
+    {
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $data['image'] = ImageStorage::store($request->file('image'), 'branches');
+        }
+
+        $branch = Branch::create($data);
+
+        return (new BranchResource($branch))
+            ->additional(['message' => 'Sucursal creada correctamente.'])
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    /**
+     * PUT/PATCH /api/branches/{branch} (solo admin)
+     */
+    public function update(UpdateBranchRequest $request, Branch $branch)
+    {
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $oldImage = $branch->image;
+            $data['image'] = ImageStorage::store($request->file('image'), 'branches');
+            ImageStorage::delete($oldImage);
+        }
+
+        $branch->update($data);
+
+        return (new BranchResource($branch))
+            ->additional(['message' => 'Sucursal actualizada correctamente.']);
+    }
+
+    /**
+     * DELETE /api/branches/{branch} (solo admin)
+     */
+    public function destroy(Branch $branch)
+    {
+        ImageStorage::delete($branch->image);
+        $branch->delete();
+
+        return response()->json([
+            'message' => 'Sucursal eliminada correctamente.',
+        ]);
     }
 }

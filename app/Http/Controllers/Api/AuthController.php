@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
@@ -20,20 +24,29 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request)
     {
-        $user = User::create([
+        $data = [
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'birthdate' => $request->birthdate,
             'password' => $request->password, // se hashea solo por el cast 'hashed'
             'role' => 'client', // el registro público siempre crea clientes
-        ]);
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $data['avatar'] = \App\Support\ImageStorage::store($request->file('avatar'), 'avatars');
+        }
+
+        $user = User::create($data);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Cuenta creada correctamente.',
-            'user' => new \App\Http\Resources\UserResource($user),]);
+            'user' => new UserResource($user),
+            'token' => $token,
+            'token_type' => 'Bearer',
+        ], 201);
     }
 
     /**
@@ -145,5 +158,55 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Contraseña actualizada correctamente.',
         ]);
+    }
+
+    /**
+     * POST /api/change-password  (requiere token)
+     * A diferencia de forgot/reset-password (para cuando no puedes entrar),
+     * este endpoint es para cuando SÍ tienes sesión y quieres cambiarla
+     * desde "Ajustes". Pide la contraseña actual por seguridad.
+     */
+    public function changePassword(ChangePasswordRequest $request)
+    {
+        $user = $request->user();
+
+        if (! Hash::check($request->input('current_password'), $user->password)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'current_password' => ['La contraseña actual no es correcta.'],
+            ]);
+        }
+
+        $user->forceFill([
+            'password' => $request->input('password'), // se hashea por el cast 'hashed'
+        ])->save();
+
+        // Revoca todos los tokens menos el que se está usando ahora mismo,
+        // para no cerrar la sesión actual justo después de cambiar la clave.
+        $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()?->id)->delete();
+
+        return response()->json([
+            'message' => 'Contraseña actualizada correctamente.',
+        ]);
+    }
+
+    /**
+     * PUT /api/profile  (requiere token)
+     * Edita los datos propios del usuario autenticado (pantalla de Ajustes).
+     */
+    public function updateProfile(UpdateProfileRequest $request)
+    {
+        $user = $request->user();
+        $data = $request->validated();
+
+        if ($request->hasFile('avatar')) {
+            $oldAvatar = $user->avatar;
+            $data['avatar'] = \App\Support\ImageStorage::store($request->file('avatar'), 'avatars');
+            \App\Support\ImageStorage::delete($oldAvatar);
+        }
+
+        $user->update($data);
+
+        return (new UserResource($user->load('branch')))
+            ->additional(['message' => 'Perfil actualizado correctamente.']);
     }
 }

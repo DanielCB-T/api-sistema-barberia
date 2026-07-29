@@ -25,6 +25,7 @@ class RegisterRequest extends FormRequest
                 'confirmed',
                 Password::min(8)->mixedCase()->numbers()->symbols(),
             ],
+            'avatar' => ['nullable', 'image', 'max:4096'],
         ];
     }
 

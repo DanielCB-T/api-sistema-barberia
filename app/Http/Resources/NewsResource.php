@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Support\ImageStorage;
 
 class NewsResource extends JsonResource
 {
@@ -14,7 +15,7 @@ class NewsResource extends JsonResource
             'title' => $this->title,
             'summary' => $this->summary,
             'date' => $this->date?->format('Y-m-d'),
-            'image' => $this->image,
+            'image' => ImageStorage::url($this->image),
         ];
     }
 }

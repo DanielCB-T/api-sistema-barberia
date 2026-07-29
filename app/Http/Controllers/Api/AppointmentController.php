@@ -61,8 +61,14 @@ class AppointmentController extends Controller
         $user = $request->user();
         $service = Service::findOrFail($request->service_id);
 
+        // Un cliente siempre agenda para sí mismo; un admin puede agendar a
+        // nombre de cualquier cliente existente (seleccionado en el form).
+        $clientId = ($user->isAdmin() && $request->filled('client_id'))
+            ? $request->client_id
+            : $user->id;
+
         $appointment = Appointment::create([
-            'client_id' => $user->id,
+            'client_id' => $clientId,
             'barber_id' => $request->barber_id,
             'service_id' => $service->id,
             'branch_id' => $request->branch_id,
@@ -77,7 +83,9 @@ class AppointmentController extends Controller
             'appointment_id' => $appointment->id,
             'status' => 'pendiente',
             'changed_by' => $user->id,
-            'note' => 'Cita creada por el cliente.',
+            'note' => $user->isAdmin() && $clientId !== $user->id
+                ? 'Cita creada por el administrador a nombre del cliente.'
+                : 'Cita creada por el cliente.',
         ]);
 
         return (new AppointmentResource($appointment->load(self::RELATIONS)))
@@ -169,6 +177,20 @@ class AppointmentController extends Controller
 
         return (new AppointmentResource($appointment->load(self::RELATIONS)))
             ->additional(['message' => "Cita actualizada a estado \"{$newStatus}\"."]);
+    }
+
+    /**
+     * DELETE /api/appointments/{appointment}  (solo admin)
+     * Borrado definitivo (no es un cambio de estado); usado desde el panel
+     * de administración para eliminar citas de prueba o erróneas.
+     */
+    public function destroy(Appointment $appointment)
+    {
+        $appointment->delete();
+
+        return response()->json([
+            'message' => 'Cita eliminada correctamente.',
+        ]);
     }
 
     /**

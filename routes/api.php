@@ -5,13 +5,10 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BarberController;
 use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -34,30 +31,19 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-// Catálogo de servicios: lectura pública (así lo consume el sitio público).
+// Catálogo: lectura pública (así lo consume el sitio público).
 Route::get('/services', [ServiceController::class, 'index']);
 Route::get('/services/{service}', [ServiceController::class, 'show']);
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{product}', [ProductController::class, 'show']);
+Route::get('/branches', [BranchController::class, 'index']);
+Route::get('/branches/{branch}', [BranchController::class, 'show']);
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/{news}', [NewsController::class, 'show']);
 
 // Barberos: lectura pública, se usa en el selector del formulario de cita
 // (?branch_id=1 para filtrar por sucursal).
 Route::get('/barbers', [BarberController::class, 'index']);
-
-// Catálogo de productos: lectura pública (igual que servicios).
-Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{product}', [ProductController::class, 'show']);
-
-// Sucursales: lectura pública, incluye opening_time/closing_time (se usan
-// para validar el horario comercial al agendar, ver tarea 13).
-Route::get('/branches', [BranchController::class, 'index']);
-Route::get('/branches/{branch}', [BranchController::class, 'show']);
-
-// Noticias: lectura pública, más recientes primero.
-Route::get('/news', [NewsController::class, 'index']);
-Route::get('/news/{news}', [NewsController::class, 'show']);
-
-// Webhook de Stripe: público, sin auth (Stripe no manda un token nuestro,
-// la seguridad la da la verificación de firma dentro del controlador).
-Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
 
 // ============================================================
 // Rutas protegidas: requieren token válido (Authorization: Bearer <token>)
@@ -65,8 +51,9 @@ Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::put('/profile', [ProfileController::class, 'update']);
-    Route::post('/payments/create', [PaymentController::class, 'create']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+
     Route::get('/notifications', [NotificationController::class, 'index']);
 
     // --- Citas: cliente, barbero y admin comparten los mismos endpoints;
@@ -92,13 +79,28 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Solo admin ---
     Route::middleware('role:admin')->group(function () {
         Route::get('/users', [UserController::class, 'index']);
+
         Route::post('/services', [ServiceController::class, 'store']);
         Route::put('/services/{service}', [ServiceController::class, 'update']);
         Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
+
         Route::post('/products', [ProductController::class, 'store']);
         Route::put('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
-        Route::get('/clients/{client}', [ClientController::class, 'show']);
+
+        Route::post('/branches', [BranchController::class, 'store']);
+        Route::put('/branches/{branch}', [BranchController::class, 'update']);
+        Route::delete('/branches/{branch}', [BranchController::class, 'destroy']);
+
+        Route::post('/news', [NewsController::class, 'store']);
+        Route::put('/news/{news}', [NewsController::class, 'update']);
+        Route::delete('/news/{news}', [NewsController::class, 'destroy']);
+
+        Route::post('/barbers', [BarberController::class, 'store']);
+        Route::put('/barbers/{barber}', [BarberController::class, 'update']);
+        Route::delete('/barbers/{barber}', [BarberController::class, 'destroy']);
+
+        Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
     });
 
     // --- Admin o el propio usuario (la lógica exacta vive en el controlador) ---
