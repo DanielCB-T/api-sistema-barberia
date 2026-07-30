@@ -80,8 +80,22 @@ class NotificationService
     {
         $appointment->loadMissing(['client', 'barber', 'service', 'branch']);
 
+        return $this->sendSms(
+            $appointment,
+            $this->buildAppointmentMessage($appointment),
+            'nueva_cita'
+        );
+    }
+
+    /**
+     * Envío de SMS reutilizable: manda el mensaje al teléfono del cliente
+     * (si tiene) y deja registro de la notificación en canal sms con su
+     * estado (enviado/fallido). Centraliza la lógica para creación,
+     * confirmación y posposición/reagendado.
+     */
+    private function sendSms(Appointment $appointment, string $message, string $type): bool
+    {
         $phone = $appointment->client?->phone;
-        $message = $this->buildAppointmentMessage($appointment);
 
         $sent = $phone
             ? $this->sms->sendText($phone, $message)
@@ -89,7 +103,7 @@ class NotificationService
 
         $this->record(
             $appointment->client_id,
-            'nueva_cita',
+            $type,
             $message,
             $appointment,
             'sms',
@@ -131,7 +145,7 @@ class NotificationService
 
     public function appointmentRescheduled(Appointment $appointment): void
     {
-        $appointment->loadMissing(['client', 'barber', 'service']);
+        $appointment->loadMissing(['client', 'barber', 'service', 'branch']);
 
         $when = $this->formatDateTime($appointment);
         $service = $appointment->service?->name ?? 'servicio';
@@ -157,6 +171,42 @@ class NotificationService
             "Cita reagendada: {$appointment->client?->name} ({$service}) para el {$when}.",
             $appointment
         );
+
+        // Aviso por SMS al cliente sobre la nueva fecha/hora (si optó por SMS).
+        if ($appointment->notify_sms) {
+            $this->sendSms(
+                $appointment,
+                $this->buildRescheduleMessage($appointment),
+                'cita_reagendada'
+            );
+        }
+    }
+
+    /**
+     * Cita confirmada (aceptada) por la barbería. Avisa al cliente en la
+     * campanita y por SMS (si optó por SMS).
+     */
+    public function appointmentConfirmed(Appointment $appointment): void
+    {
+        $appointment->loadMissing(['client', 'barber', 'service', 'branch']);
+
+        $when = $this->formatDateTime($appointment);
+        $service = $appointment->service?->name ?? 'servicio';
+
+        $this->record(
+            $appointment->client_id,
+            'cita_confirmada',
+            "Tu cita de {$service} fue confirmada para el {$when}.",
+            $appointment
+        );
+
+        if ($appointment->notify_sms) {
+            $this->sendSms(
+                $appointment,
+                $this->buildConfirmedMessage($appointment),
+                'cita_confirmada'
+            );
+        }
     }
 
     // ------------------------------------------------------------------
@@ -294,6 +344,36 @@ class NotificationService
             "Fecha: {$date} {$time}. Servicio: {$service}. ".
             "Barbero: {$barber}. Sucursal: {$branch}. ".
             'Si necesitas reagendar o cancelar, contactanos.';
+    }
+
+    /**
+     * Texto del SMS cuando la cita se confirma (acepta) desde la barbería.
+     */
+    private function buildConfirmedMessage(Appointment $appointment): string
+    {
+        $name = $appointment->client?->name ?? 'Cliente';
+        $date = optional($appointment->date_time)->format('d/m/Y') ?? '';
+        $time = optional($appointment->date_time)->format('H:i') ?? '';
+        $service = $appointment->service?->name ?? 'Servicio';
+        $branch = $appointment->branch?->name ?? 'Nuestra sucursal';
+
+        return "Hola {$name}, tu cita de {$service} fue CONFIRMADA para el ".
+            "{$date} a las {$time} en {$branch}. Te esperamos!";
+    }
+
+    /**
+     * Texto del SMS cuando la cita se pospone o reprograma a una nueva fecha.
+     */
+    private function buildRescheduleMessage(Appointment $appointment): string
+    {
+        $name = $appointment->client?->name ?? 'Cliente';
+        $date = optional($appointment->date_time)->format('d/m/Y') ?? '';
+        $time = optional($appointment->date_time)->format('H:i') ?? '';
+        $service = $appointment->service?->name ?? 'Servicio';
+        $branch = $appointment->branch?->name ?? 'Nuestra sucursal';
+
+        return "Hola {$name}, tu cita de {$service} se REPROGRAMO para el ".
+            "{$date} a las {$time} en {$branch}. Cualquier duda, contactanos.";
     }
 
     private function formatDateTime(Appointment $appointment): string

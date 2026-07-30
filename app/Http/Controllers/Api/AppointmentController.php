@@ -53,7 +53,8 @@ class AppointmentController extends Controller
             ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->input('branch_id')))
             ->when($request->filled('date_from'), fn ($q) => $q->whereDate('date_time', '>=', $request->input('date_from')))
             ->when($request->filled('date_to'), fn ($q) => $q->whereDate('date_time', '<=', $request->input('date_to')))
-            ->orderBy('date_time', 'desc');
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         return AppointmentResource::collection($query->paginate($perPage));
     }
@@ -196,6 +197,8 @@ class AppointmentController extends Controller
             $this->notifications->appointmentCancelled($fresh);
         } elseif ($newStatus === 'pospuesta') {
             $this->notifications->appointmentRescheduled($fresh);
+        } elseif ($newStatus === 'confirmada') {
+            $this->notifications->appointmentConfirmed($fresh);
         }
 
         return (new AppointmentResource($fresh))
