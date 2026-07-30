@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\Appointment;
 
+use App\Models\Branch;
+use App\Models\Service;
+use App\Services\AppointmentAvailability;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAppointmentRequest extends FormRequest
@@ -22,7 +25,7 @@ class StoreAppointmentRequest extends FormRequest
             'barber_id' => ['required', 'integer', 'exists:users,id'],
             'date_time' => ['required', 'date', 'after:now'],
             'pay_online' => ['boolean'],
-            'notify_whatsapp' => ['boolean'],
+            'notify_sms' => ['boolean'],
         ];
     }
 
@@ -33,5 +36,48 @@ class StoreAppointmentRequest extends FormRequest
             'barber_id.exists' => 'El barbero seleccionado no existe.',
             'client_id.exists' => 'El cliente seleccionado no existe.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($validator->errors()->hasAny(['service_id', 'branch_id', 'barber_id', 'date_time'])) {
+                return;
+            }
+
+            $service = Service::find($this->input('service_id'));
+            $branch = Branch::find($this->input('branch_id'));
+            if (! $service || ! $branch) {
+                return;
+            }
+
+            if (! AppointmentAvailability::isWithinBusinessHours(
+                branch: $branch,
+                start: $this->input('date_time'),
+                durationMinutes: $service->duration,
+            )) {
+                $validator->errors()->add(
+                    'date_time',
+                    sprintf(
+                        'Esta sucursal atiende de %s a %s. Elige un horario dentro de ese rango.',
+                        $branch->opening_time->format('H:i'),
+                        $branch->closing_time->format('H:i'),
+                    )
+                );
+
+                return;
+            }
+
+            if (AppointmentAvailability::hasConflict(
+                barberId: (int) $this->input('barber_id'),
+                start: $this->input('date_time'),
+                durationMinutes: $service->duration,
+            )) {
+                $validator->errors()->add(
+                    'barber_id',
+                    'El barbero ya tiene una cita agendada en ese horario. Elige otro horario o barbero.'
+                );
+            }
+        });
     }
 }

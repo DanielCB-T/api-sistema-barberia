@@ -15,7 +15,7 @@ class AppointmentResource extends JsonResource
             'date_time' => $this->date_time?->format('Y-m-d H:i'),
             'duration' => $this->duration,
             'pay_online' => (bool) $this->pay_online,
-            'notify_whatsapp' => (bool) $this->notify_whatsapp,
+            'notify_sms' => (bool) $this->notify_sms,
             'client' => new UserResource($this->whenLoaded('client')),
             'barber' => new UserResource($this->whenLoaded('barber')),
             'service' => new ServiceResource($this->whenLoaded('service')),

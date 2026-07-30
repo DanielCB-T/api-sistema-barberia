@@ -16,7 +16,7 @@ class NotificationSeeder extends Seeder
             Notification::create([
                 'user_id' => $appointment->client_id,
                 'appointment_id' => $appointment->id,
-                'channel' => fake()->randomElement(['email', 'sms', 'whatsapp']),
+                'channel' => fake()->randomElement(['email', 'sms']),
                 'message' => "Tu cita del servicio ha sido actualizada a estado: {$appointment->status}.",
                 'status' => fake()->randomElement(['enviado', 'enviado', 'enviado', 'fallido']),
             ]);

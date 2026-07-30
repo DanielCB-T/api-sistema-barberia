@@ -37,22 +37,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | WhatsApp (Meta WhatsApp Cloud API)
+    | Brevo (SMS transaccional)
     |--------------------------------------------------------------------------
     |
-    | Usado por App\Services\WhatsAppService para enviar la confirmación de
-    | citas. Si WHATSAPP_ENABLED=false o faltan credenciales, el servicio
-    | degrada con elegancia (registra el mensaje en el log y marca la
-    | notificación como "fallido") sin romper la petición del usuario.
+    | Usado por App\Services\BrevoSmsService para enviar la confirmación de
+    | citas por SMS. Si BREVO_SMS_ENABLED=false o falta la API key, el
+    | servicio degrada con elegancia (registra el mensaje en el log y marca
+    | la notificación como "fallido") sin romper la petición del usuario.
+    |
+    | Consigue tu API key en https://app.brevo.com/settings/keys/api
+    | El remitente ("sender") debe ser alfanumérico, máximo 11 caracteres,
+    | sin espacios (ej. "Barberia").
     |
     */
 
-    'whatsapp' => [
-        'enabled' => env('WHATSAPP_ENABLED', false),
-        'token' => env('WHATSAPP_TOKEN'),
-        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
-        'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
-        'default_country_code' => env('WHATSAPP_DEFAULT_COUNTRY_CODE', '52'),
+    'brevo' => [
+        'enabled' => env('BREVO_SMS_ENABLED', false),
+        'api_key' => env('BREVO_API_KEY'),
+        'sender' => env('BREVO_SMS_SENDER', 'Barberia'),
+        'default_country_code' => env('BREVO_DEFAULT_COUNTRY_CODE', '52'),
     ],
 
 ];

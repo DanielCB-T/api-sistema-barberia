@@ -117,8 +117,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
 
-        // Reenvío manual de la confirmación por WhatsApp al cliente.
-        Route::post('/appointments/{appointment}/confirm-whatsapp', [AppointmentController::class, 'confirmWhatsapp']);
+        // Reenvío manual de la confirmación por SMS al cliente.
+        Route::post('/appointments/{appointment}/confirm-sms', [AppointmentController::class, 'confirmSms']);
     });
 
     // --- Admin o el propio usuario (la lógica exacta vive en el controlador) ---

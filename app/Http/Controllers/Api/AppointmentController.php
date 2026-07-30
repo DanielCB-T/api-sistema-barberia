@@ -81,7 +81,7 @@ class AppointmentController extends Controller
             'duration' => $service->duration,
             'status' => 'pendiente',
             'pay_online' => $request->boolean('pay_online'),
-            'notify_whatsapp' => $request->boolean('notify_whatsapp', true),
+            'notify_sms' => $request->boolean('notify_sms', true),
         ]);
 
         AppointmentStatusHistory::create([
@@ -94,7 +94,7 @@ class AppointmentController extends Controller
         ]);
 
         // Notificaciones internas (cliente, barbero, admins) + confirmación
-        // por WhatsApp al cliente si la cita se marcó con notify_whatsapp.
+        // por SMS al cliente si la cita se marcó con notify_sms.
         $this->notifications->appointmentCreated($appointment->load(self::RELATIONS));
 
         return (new AppointmentResource($appointment->load(self::RELATIONS)))
@@ -203,17 +203,17 @@ class AppointmentController extends Controller
     }
 
     /**
-     * POST /api/appointments/{appointment}/confirm-whatsapp  (solo admin)
-     * Reenvía manualmente la confirmación por WhatsApp al cliente.
+     * POST /api/appointments/{appointment}/confirm-sms  (solo admin)
+     * Reenvía manualmente la confirmación por SMS al cliente.
      */
-    public function confirmWhatsapp(Request $request, Appointment $appointment)
+    public function confirmSms(Request $request, Appointment $appointment)
     {
-        $sent = $this->notifications->sendAppointmentWhatsapp($appointment->load(self::RELATIONS));
+        $sent = $this->notifications->sendAppointmentSms($appointment->load(self::RELATIONS));
 
         return response()->json([
             'message' => $sent
-                ? 'Confirmación por WhatsApp reenviada correctamente.'
-                : 'No se pudo enviar el WhatsApp (revisa la configuración o el teléfono del cliente).',
+                ? 'Confirmación por SMS reenviada correctamente.'
+                : 'No se pudo enviar el SMS (revisa la configuración o el teléfono del cliente).',
             'sent' => $sent,
         ], $sent ? 200 : 422);
     }

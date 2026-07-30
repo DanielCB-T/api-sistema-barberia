@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Orquesta la creación de notificaciones internas (la campanita del Navbar)
- * y dispara los avisos por WhatsApp cuando aplica.
+ * y dispara los avisos por SMS cuando aplica.
  *
  * Mantiene los controladores limpios: cada controlador solo llama a un
  * método semántico (appointmentCreated, orderPlaced, etc.) y este servicio
@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Log;
  */
 class NotificationService
 {
-    public function __construct(private readonly WhatsAppService $whatsapp)
+    public function __construct(private readonly BrevoSmsService $sms)
     {
     }
 
@@ -33,8 +33,8 @@ class NotificationService
 
     /**
      * Nueva cita creada. Avisa al cliente, al barbero (si lo hay) y a los
-     * administradores; y manda la confirmación por WhatsApp al cliente si la
-     * cita se marcó con notify_whatsapp.
+     * administradores; y manda la confirmación por SMS al cliente si la
+     * cita se marcó con notify_sms.
      */
     public function appointmentCreated(Appointment $appointment): void
     {
@@ -65,18 +65,18 @@ class NotificationService
             $appointment
         );
 
-        if ($appointment->notify_whatsapp) {
-            $this->sendAppointmentWhatsapp($appointment);
+        if ($appointment->notify_sms) {
+            $this->sendAppointmentSms($appointment);
         }
     }
 
     /**
-     * Envía (o reenvía) la confirmación de la cita por WhatsApp al cliente y
-     * registra el resultado como notificación de canal whatsapp.
+     * Envía (o reenvía) la confirmación de la cita por SMS al cliente y
+     * registra el resultado como notificación de canal sms.
      *
-     * @return bool true si el mensaje se entregó a la API de WhatsApp.
+     * @return bool true si el mensaje se entregó a la API de Brevo.
      */
-    public function sendAppointmentWhatsapp(Appointment $appointment): bool
+    public function sendAppointmentSms(Appointment $appointment): bool
     {
         $appointment->loadMissing(['client', 'barber', 'service', 'branch']);
 
@@ -84,7 +84,7 @@ class NotificationService
         $message = $this->buildAppointmentMessage($appointment);
 
         $sent = $phone
-            ? $this->whatsapp->sendText($phone, $message)
+            ? $this->sms->sendText($phone, $message)
             : false;
 
         $this->record(
@@ -92,7 +92,7 @@ class NotificationService
             'nueva_cita',
             $message,
             $appointment,
-            'whatsapp',
+            'sms',
             $sent ? 'enviado' : 'fallido'
         );
 
@@ -276,9 +276,10 @@ class NotificationService
     }
 
     /**
-     * Texto completo de la confirmación de cita para WhatsApp, con todos los
-     * datos que pide el requerimiento: nombre, fecha, hora, servicio, barbero
-     * y sucursal.
+     * Texto de la confirmación de cita para SMS, con los datos clave:
+     * fecha, hora, servicio, barbero y sucursal. Se evita usar emojis para
+     * no forzar la codificación UCS-2 de los SMS (70 caracteres por
+     * segmento en vez de 160, lo que encarece el envío).
      */
     private function buildAppointmentMessage(Appointment $appointment): string
     {
@@ -289,13 +290,10 @@ class NotificationService
         $barber = $appointment->barber?->name ?? 'Por asignar';
         $branch = $appointment->branch?->name ?? 'Nuestra sucursal';
 
-        return "Hola {$name}, tu cita quedó confirmada ✅\n\n".
-            "📅 Fecha: {$date}\n".
-            "🕒 Hora: {$time}\n".
-            "✂️ Servicio: {$service}\n".
-            "💈 Barbero: {$barber}\n".
-            "📍 Sucursal: {$branch}\n\n".
-            'Si necesitas reagendar o cancelar, contáctanos. ¡Te esperamos!';
+        return "Hola {$name}, tu cita quedo confirmada. ".
+            "Fecha: {$date} {$time}. Servicio: {$service}. ".
+            "Barbero: {$barber}. Sucursal: {$branch}. ".
+            'Si necesitas reagendar o cancelar, contactanos.';
     }
 
     private function formatDateTime(Appointment $appointment): string

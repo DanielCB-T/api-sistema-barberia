@@ -34,7 +34,7 @@ class AppointmentSeeder extends Seeder
                 'duration' => $service->duration,
                 'status' => $status,
                 'pay_online' => (bool) rand(0, 1),
-                'notify_whatsapp' => true,
+                'notify_sms' => true,
             ]);
 
             AppointmentStatusHistory::create([

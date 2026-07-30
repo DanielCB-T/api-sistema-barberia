@@ -21,7 +21,7 @@ class Appointment extends Model
         'duration',
         'status',
         'pay_online',
-        'notify_whatsapp',
+        'notify_sms',
     ];
 
     protected function casts(): array
@@ -29,7 +29,7 @@ class Appointment extends Model
         return [
             'date_time' => 'datetime',
             'pay_online' => 'boolean',
-            'notify_whatsapp' => 'boolean',
+            'notify_sms' => 'boolean',
         ];
     }
 
