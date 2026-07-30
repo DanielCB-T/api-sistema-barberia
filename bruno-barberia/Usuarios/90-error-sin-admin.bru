@@ -1,0 +1,21 @@
+meta {
+  name: ERROR listar sin rol admin (403)
+  type: http
+  seq: 90
+}
+
+get {
+  url: {{base_url}}/users
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+tests {
+  test("status 403 (prohibido para cliente)", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

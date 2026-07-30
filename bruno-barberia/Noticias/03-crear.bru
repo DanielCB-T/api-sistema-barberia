@@ -1,0 +1,35 @@
+meta {
+  name: Crear noticia (admin)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/news
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Nueva promocion de verano",
+    "summary": "20% en cortes todo agosto.",
+    "date": "2026-08-01"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setEnvVar("news_id_created", res.getBody().data.id);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

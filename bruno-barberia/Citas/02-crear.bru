@@ -1,0 +1,42 @@
+meta {
+  name: Crear cita (cliente)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/appointments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+body:json {
+  {
+    "service_id": "{{service_id}}",
+    "branch_id": "{{branch_id}}",
+    "barber_id": "{{barber_id}}",
+    "date_time": "{{future_datetime}}",
+    "pay_online": false,
+    "notify_sms": true
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setEnvVar("appointment_id_created", res.getBody().data.id);
+  }
+}
+
+tests {
+  test("201 creada, o 422 si el horario no esta disponible", function() {
+    expect([201,422]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  date_time debe ser futuro y dentro del horario/disponibilidad. Ajusta {{future_datetime}} si da 422.
+}

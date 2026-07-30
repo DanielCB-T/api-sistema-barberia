@@ -1,0 +1,32 @@
+meta {
+  name: Cambiar estado (confirmar)
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/appointments/{{appointment_id}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "status": "confirmada",
+    "note": "Confirmada desde pruebas"
+  }
+}
+
+tests {
+  test("200, o 422 si la transicion no es valida", function() {
+    expect([200,422]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  La maquina de estados valida la transicion; 422 si el estado actual no permite pasar a confirmada.
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Listar notificaciones
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/notifications
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+script:post-response {
+  var items = res.getBody().data;
+  if (items && items.length) {
+    bru.setEnvVar("notification_id", items[0].id);
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("incluye conteo de no leidas", function() {
+    expect(res.getBody().meta).to.have.property("unread");
+  });
+}

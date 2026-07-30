@@ -1,0 +1,29 @@
+meta {
+  name: Actualizar barbero (admin)
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/barbers/{{barber_id_created}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Barbero Prueba Editado",
+    "phone": "9510001122",
+    "branch_id": "{{branch_id}}"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

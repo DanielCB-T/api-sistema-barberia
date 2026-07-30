@@ -1,0 +1,34 @@
+meta {
+  name: Actualizar producto (admin)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/products/{{product_id_created}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Cera Modeladora XL",
+    "price": 175.5,
+    "stock": 30,
+    "description": "Version grande"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  Actualiza el producto creado en el paso anterior. Sin imagen (JSON).
+}

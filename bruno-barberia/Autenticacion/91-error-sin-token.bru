@@ -1,0 +1,17 @@
+meta {
+  name: ERROR acceso sin token (401)
+  type: http
+  seq: 91
+}
+
+get {
+  url: {{base_url}}/user
+  body: none
+  auth: none
+}
+
+tests {
+  test("status 401 (no autenticado)", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

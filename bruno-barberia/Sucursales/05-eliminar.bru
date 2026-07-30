@@ -1,0 +1,21 @@
+meta {
+  name: Eliminar sucursal (admin)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/branches/{{branch_id_created}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

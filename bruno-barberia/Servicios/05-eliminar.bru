@@ -1,0 +1,21 @@
+meta {
+  name: Eliminar servicio (admin)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/services/{{service_id_created}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

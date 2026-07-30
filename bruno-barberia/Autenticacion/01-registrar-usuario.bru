@@ -1,0 +1,35 @@
+meta {
+  name: Registrar usuario
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Cliente Prueba",
+    "email": "prueba{{$timestamp}}@correo.com",
+    "phone": "9511234567",
+    "birthdate": "1998-05-20",
+    "password": "Cliente123!",
+    "password_confirmation": "Cliente123!"
+  }
+}
+
+tests {
+  test("status 201 (cuenta creada)", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("devuelve el usuario", function() {
+    expect(res.getBody().user).to.be.an("object");
+  });
+}
+
+docs {
+  Registra un cliente. El email usa {{$timestamp}} para no chocar con la regla unique.
+}

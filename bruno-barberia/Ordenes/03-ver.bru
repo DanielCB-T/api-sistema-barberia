@@ -1,0 +1,21 @@
+meta {
+  name: Ver orden
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/orders/{{order_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+tests {
+  test("200, o 404 si no existe", function() {
+    expect([200,404]).to.include(res.getStatus());
+  });
+}

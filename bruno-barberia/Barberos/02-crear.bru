@@ -1,0 +1,38 @@
+meta {
+  name: Crear barbero (admin)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/barbers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Barbero Prueba",
+    "email": "barbero{{$timestamp}}@barberia.com",
+    "phone": "9519998877",
+    "branch_id": "{{branch_id}}",
+    "password": "Barbero123!",
+    "password_confirmation": "Barbero123!"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setEnvVar("barber_id_created", res.getBody().data.id);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+}

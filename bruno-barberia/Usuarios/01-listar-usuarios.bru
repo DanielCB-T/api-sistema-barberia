@@ -1,0 +1,24 @@
+meta {
+  name: Listar usuarios
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/users
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  test("data es arreglo", function() {
+    expect(res.getBody().data).to.be.an("array");
+  });
+}

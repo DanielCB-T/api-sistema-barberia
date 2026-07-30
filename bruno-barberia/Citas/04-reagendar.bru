@@ -1,0 +1,27 @@
+meta {
+  name: Reagendar cita
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/appointments/{{appointment_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "date_time": "{{future_datetime}}"
+  }
+}
+
+tests {
+  test("200, o 422 si el estado no permite reagendar", function() {
+    expect([200,422]).to.include(res.getStatus());
+  });
+}

@@ -1,0 +1,31 @@
+meta {
+  name: ERROR crear sin rol admin (403)
+  type: http
+  seq: 90
+}
+
+post {
+  url: {{base_url}}/barbers
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+body:json {
+  {
+    "name": "X",
+    "email": "x{{$timestamp}}@x.com",
+    "branch_id": "{{branch_id}}",
+    "password": "Barbero123!",
+    "password_confirmation": "Barbero123!"
+  }
+}
+
+tests {
+  test("status 403", function() {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

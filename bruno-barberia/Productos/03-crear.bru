@@ -1,0 +1,39 @@
+meta {
+  name: Crear producto (admin)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Cera Modeladora",
+    "price": 150.0,
+    "stock": 25,
+    "description": "Fijacion fuerte, acabado mate"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setEnvVar("product_id_created", res.getBody().data.id);
+  }
+}
+
+tests {
+  test("status 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  test("guarda id creado", function() {
+    expect(res.getBody().data.id).to.be.a("number");
+  });
+}

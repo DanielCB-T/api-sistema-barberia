@@ -1,0 +1,28 @@
+meta {
+  name: ERROR validación al crear (422)
+  type: http
+  seq: 90
+}
+
+post {
+  url: {{base_url}}/services
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "",
+    "price": "abc"
+  }
+}
+
+tests {
+  test("status 422", function() {
+    expect(res.getStatus()).to.equal(422);
+  });
+}

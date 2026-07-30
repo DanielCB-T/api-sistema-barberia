@@ -1,0 +1,29 @@
+meta {
+  name: Actualizar noticia (admin)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/news/{{news_id_created}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Promocion de verano (actualizada)",
+    "summary": "25% en cortes.",
+    "date": "2026-08-05"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

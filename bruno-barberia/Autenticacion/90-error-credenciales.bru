@@ -1,0 +1,27 @@
+meta {
+  name: ERROR credenciales inválidas (422)
+  type: http
+  seq: 90
+}
+
+post {
+  url: {{base_url}}/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{admin_email}}",
+    "password": "claveIncorrecta"
+  }
+}
+
+tests {
+  test("status 422", function() {
+    expect(res.getStatus()).to.equal(422);
+  });
+  test("trae errores de validacion", function() {
+    expect(res.getBody().errors).to.be.an("object");
+  });
+}

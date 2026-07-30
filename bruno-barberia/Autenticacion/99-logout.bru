@@ -1,0 +1,25 @@
+meta {
+  name: Logout
+  type: http
+  seq: 99
+}
+
+post {
+  url: {{base_url}}/logout
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}
+
+docs {
+  OJO: revoca el token actual. Ejecutalo al final; luego vuelve a Login Admin.
+}

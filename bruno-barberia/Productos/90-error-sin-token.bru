@@ -1,0 +1,25 @@
+meta {
+  name: ERROR crear sin token (401)
+  type: http
+  seq: 90
+}
+
+post {
+  url: {{base_url}}/products
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "X",
+    "price": 1,
+    "stock": 1
+  }
+}
+
+tests {
+  test("status 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

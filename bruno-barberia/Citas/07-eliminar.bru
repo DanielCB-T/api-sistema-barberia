@@ -1,0 +1,21 @@
+meta {
+  name: Eliminar cita (admin)
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{base_url}}/appointments/{{appointment_id_created}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("200, o 404 si no se creo la cita", function() {
+    expect([200,404]).to.include(res.getStatus());
+  });
+}

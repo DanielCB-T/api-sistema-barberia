@@ -1,0 +1,37 @@
+meta {
+  name: Checkout (generar orden)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/orders/checkout
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+body:json {
+  {
+    "payment_method": "en_sucursal"
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    bru.setEnvVar("order_id", res.getBody().data.id);
+  }
+}
+
+tests {
+  test("201 orden generada, o 422 si el carrito esta vacio", function() {
+    expect([201,422]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  Agrega primero un producto en Carrito. payment_method: online | en_sucursal.
+}

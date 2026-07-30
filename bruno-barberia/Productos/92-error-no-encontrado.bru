@@ -1,0 +1,17 @@
+meta {
+  name: ERROR producto inexistente (404)
+  type: http
+  seq: 92
+}
+
+get {
+  url: {{base_url}}/products/99999999
+  body: none
+  auth: none
+}
+
+tests {
+  test("status 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

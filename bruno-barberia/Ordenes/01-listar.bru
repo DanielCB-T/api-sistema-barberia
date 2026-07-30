@@ -1,0 +1,21 @@
+meta {
+  name: Listar órdenes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/orders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

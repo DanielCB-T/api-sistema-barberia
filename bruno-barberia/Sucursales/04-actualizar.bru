@@ -1,0 +1,31 @@
+meta {
+  name: Actualizar sucursal (admin)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/branches/{{branch_id_created}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Sucursal Centro Historico",
+    "address": "Av. Juarez 120",
+    "phone": "9512223355",
+    "opening_time": "10:00",
+    "closing_time": "21:00"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

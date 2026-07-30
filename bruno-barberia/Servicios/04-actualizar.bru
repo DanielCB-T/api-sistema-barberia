@@ -1,0 +1,31 @@
+meta {
+  name: Actualizar servicio (admin)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/services/{{service_id_created}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Corte + Barba Premium",
+    "category": "Corte",
+    "price": 260,
+    "duration": 50,
+    "description": "Con toalla caliente"
+  }
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

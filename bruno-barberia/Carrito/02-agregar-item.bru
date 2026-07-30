@@ -1,0 +1,37 @@
+meta {
+  name: Agregar producto al carrito
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+body:json {
+  {
+    "product_id": "{{product_id}}",
+    "quantity": 1
+  }
+}
+
+script:post-response {
+  if (res.getStatus() === 201) {
+    var items = res.getBody().data.items;
+    if (items && items.length) {
+      bru.setEnvVar("cart_item_id", items[items.length - 1].id);
+    }
+  }
+}
+
+tests {
+  test("201, o 422 si no hay stock", function() {
+    expect([201,422]).to.include(res.getStatus());
+  });
+}

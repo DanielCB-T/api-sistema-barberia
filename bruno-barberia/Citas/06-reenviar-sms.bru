@@ -1,0 +1,21 @@
+meta {
+  name: Reenviar confirmación por SMS (admin)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/appointments/{{appointment_id}}/confirm-sms
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("200 enviado, o 422 si no hay telefono/config SMS", function() {
+    expect([200,422]).to.include(res.getStatus());
+  });
+}

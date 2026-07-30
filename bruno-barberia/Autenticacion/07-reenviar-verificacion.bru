@@ -1,0 +1,23 @@
+meta {
+  name: Reenviar verificación de correo
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/email/verify/resend
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{admin_email}}"
+  }
+}
+
+tests {
+  test("status 200 (respuesta generica)", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

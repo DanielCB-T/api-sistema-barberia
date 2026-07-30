@@ -1,0 +1,27 @@
+meta {
+  name: Actualizar cantidad del item
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/cart/items/{{cart_item_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+body:json {
+  {
+    "quantity": 2
+  }
+}
+
+tests {
+  test("200, o 422/404 segun stock/existencia", function() {
+    expect([200,422,404]).to.include(res.getStatus());
+  });
+}

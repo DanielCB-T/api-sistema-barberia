@@ -1,0 +1,21 @@
+meta {
+  name: Eliminar producto (admin)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{base_url}}/products/{{product_id_created}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("status 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+}

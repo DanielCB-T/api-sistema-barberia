@@ -1,0 +1,21 @@
+meta {
+  name: Eliminar notificación
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/notifications/{{notification_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("200, o 403/404 segun pertenencia/existencia", function() {
+    expect([200,403,404]).to.include(res.getStatus());
+  });
+}
